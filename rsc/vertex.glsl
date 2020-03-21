@@ -27,5 +27,9 @@ void main() {
     mat4 instance_transform = mat4(a_TCol1, a_TCol2, a_TCol3, a_TCol4);
     vec4 position = instance_transform * vec4(a_Pos, 0.0, 1.0);
 
-    gl_Position = u_MVP * position;   // special var, where the transformed vertex is
+    // gl_Position = u_MVP * position;   // special var, where the transformed vertex is
+    gl_Position = vec4(a_Pos, 0.0, 1.0);
+    // z - 0
+    // homogenous coord - add w component that is used somehow to make projections work. 1 is the normal value
+
 }
