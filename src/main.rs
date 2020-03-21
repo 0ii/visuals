@@ -72,7 +72,10 @@ pub fn main() -> GameResult {
         path::PathBuf::from("./rsc")
     };
 
-    let cb = ggez::ContextBuilder::new("shader", "ggez").add_resource_path(resource_dir);
+    let cb = ggez::ContextBuilder::new("shader", "ggez")
+        .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 1000.0))
+        .add_resource_path(resource_dir);
+
     let (ctx, event_loop) = &mut cb.build()?;
 
     let state = &mut MainState::new(ctx)?;
