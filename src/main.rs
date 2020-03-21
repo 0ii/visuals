@@ -13,34 +13,34 @@ use std::path;
 
 // Define the input struct for our shader.
 gfx_defines! {
-    constant Dim {
+    constant Uniforms {
         time: f32 = "time",
     }
 }
 
 struct MainState {
-    dim: Dim,
-    shader: graphics::Shader<Dim>,
+    uniforms: Uniforms,
+    shader: graphics::Shader<Uniforms>,
 }
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let dim = Dim { time: 0.5 };
+        let uniforms = Uniforms { time: 0.5 };
         let shader = graphics::Shader::new(
             ctx,
             "/vertex.glsl", // shaders, src files that exist in ggez
             "/fragment.glsl",
-            dim,
-            "Dim",
+            uniforms,
+            "Uniforms",
             None,
         )?;
-        Ok(MainState { dim, shader })
+        Ok(MainState { uniforms, shader })
     }
 }
 
 impl event::EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.dim.time = timer::time_since_start(ctx).as_secs_f32();
+        self.uniforms.time = timer::time_since_start(ctx).as_secs_f32();
         Ok(())
     }
 
@@ -48,7 +48,7 @@ impl event::EventHandler for MainState {
         graphics::clear(ctx, [1.0, 0.0, 1.0, 1.0].into());
 
         let _lock = graphics::use_shader(ctx, &self.shader);
-        self.shader.send(ctx, self.dim)?;
+        self.shader.send(ctx, self.uniforms)?;
         let rect = graphics::Rect {
             x: -1.0,
             y: -1.0,

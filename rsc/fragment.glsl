@@ -1,6 +1,6 @@
 #version 150 core
 
-layout (std140) uniform Dim {
+layout (std140) uniform Uniforms {
     float time;
 };
 
