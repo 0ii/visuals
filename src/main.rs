@@ -50,15 +50,15 @@ impl event::EventHandler for MainState {
         {
             let _lock = graphics::use_shader(ctx, &self.shader);
             self.shader.send(ctx, self.dim)?;
-            let circle = graphics::Mesh::new_circle(
-                ctx,
-                DrawMode::fill(),
-                cgmath::Point2::new(400.0, 300.0),
-                100.0,
-                2.0,
-                graphics::WHITE,
-            )?;
-            graphics::draw(ctx, &circle, (cgmath::Point2::new(0.0, 0.0),))?;
+            let rect = graphics::Rect {
+                x: 0.0,
+                y: 0.0,
+                w: 200.0,
+                h: 100.0,
+            };
+            let square =
+                graphics::Mesh::new_rectangle(ctx, DrawMode::fill(), rect, graphics::WHITE)?;
+            graphics::draw(ctx, &square, (cgmath::Point2::new(0.0, 0.0),))?;
         }
 
         graphics::present(ctx)?;
