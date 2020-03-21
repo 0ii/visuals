@@ -14,7 +14,7 @@ use std::path;
 // Define the input struct for our shader.
 gfx_defines! {
     constant Dim {
-        rate: f32 = "u_Rate",
+        time: f32 = "time",
     }
 }
 
@@ -25,7 +25,7 @@ struct MainState {
 
 impl MainState {
     fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let dim = Dim { rate: 0.5 };
+        let dim = Dim { time: 0.5 };
         let shader = graphics::Shader::new(
             ctx,
             "/vertex.glsl", // shaders, src files that exist in ggez
@@ -40,7 +40,7 @@ impl MainState {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        self.dim.rate = 0.5 + (((timer::ticks(ctx) as f32) / 100.0).cos() / 2.0);
+        self.dim.time = timer::time_since_start(ctx).as_secs_f32();
         Ok(())
     }
 
