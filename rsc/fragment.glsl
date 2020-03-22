@@ -14,10 +14,11 @@ float rectangle_area(vec2 a, vec2 b, vec2 d) {
 }
 
 float triangle_area(vec2 a, vec2 b, vec2 c) {
-  float magAB = length(a - b);
-  float magAC = length(a - c);
-  float base = sqrt( ( magAB * magAB ) - ( (magAC/2) * (magAC/2) ) );
-  return 0.5 * base * magAB;
+  float i0 = length(a - c);
+  float i1 = length(a - b) / 2;
+  float base = sqrt( ( i0 * i0 ) - (i1 * i1) );
+  float height = length(a - b);
+  return 0.5 * base * height;
 }
 
 
@@ -40,7 +41,7 @@ void main() {
   float triangle_area_sum = area_ABP + area_BCP + area_CDP + area_DAP;
 
 
-  float err = 0.01;
+  float err = 0.05;
   if (abs(triangle_area_sum - area_ABCD) < err) {
     // Point is on the inside
     Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
