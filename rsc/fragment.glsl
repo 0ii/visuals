@@ -7,17 +7,16 @@ layout (std140) uniform Uniforms {
 in vec2 uv;
 out vec4 Target0;
 
+
 float rectangle_area(vec2 a, vec2 b, vec2 d) {
-  float w = length(a - b);
-  float h = length(a - d);
+  float w = distance(a, b);
+  float h = distance(a, d);
   return w * h;
 }
 
-float triangle_area(vec2 a, vec2 b, vec2 c) {
-  float i0 = length(a - c);
-  float i1 = length(a - b) / 2;
-  float base = sqrt( ( i0 * i0 ) - (i1 * i1) );
-  float height = length(b - a);
+float triangle_area(vec2 a, vec2 b, vec2 p) {
+  float base = distance(a, b);
+  float height = sqrt( pow(distance(a, p), 2) - pow(0.5 * base, 2) );
   return 0.5 * base * height;
 }
 
@@ -41,11 +40,10 @@ void main() {
   float triangle_area_sum = area_ABP + area_BCP + area_CDP + area_DAP;
 
 
-  float err = 0.05;
+  float err = 0.01;
   if (abs(triangle_area_sum - area_ABCD) < err) {
     // Point is on the inside
-    // Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
-    Target0 = color2;
+    Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
   } else {
     // Point is on the outside
     Target0 = color1;
