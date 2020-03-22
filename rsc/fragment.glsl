@@ -7,56 +7,45 @@ layout (std140) uniform Uniforms {
 in vec2 uv;
 out vec4 Target0;
 
-float get_area_rectangle(vec2 p0, vec2 p1) {
-  float w = p0.x + p1.x;
-  float h = p0.y + p1.y;
+float rectangle_area(vec2 a, vec2 b, vec2 d) {
+  float w = length(a - b);
+  float h = length(a - d);
   return w * h;
 }
 
-float get_area_triangle(float p0, float p1) {
-  return 0.5 * p0 * p1;
+float triangle_area(vec2 a, vec2 b, vec2 c) {
+  float magAB = length(a - b);
+  float magAC = length(a - c);
+  float base = sqrt( ( magAB * magAB ) - ( (magAC/2) * (magAC/2) ) );
+  return 0.5 * base * magAB;
 }
 
-float get_sum_triangles(float t0, float t1, float t2, float t3) {
-  return t0 + t1 + t2 + t3;
-}
 
 void main() {
   vec4 color1 = vec4(0.5, 0.2, 1.0, 1.0); // RGBA color
   vec4 color2 = color1.abgr;
 
+  float side_len = 0.5;
   vec2 a = vec2(0.0, 0.0);
-  vec2 b = vec2(0.5, 0.0);
-  vec2 c = vec2(0.5, 0.5);
-  vec2 d = vec2(0.0, 0.5);
+  vec2 b = vec2(side_len, 0.0);
+  vec2 c = vec2(side_len, side_len);
+  vec2 d = vec2(0.0, side_len);
+  float area_ABCD = rectangle_area(a, b, d);
 
-  float area_rectangle = get_area_rectangle(a, c);
-  float abp = get_area_triangle(length(a - uv), length(b - uv));
-  float bcp = get_area_triangle(length(b - uv), length(c - uv));
-  float cdp = get_area_triangle(length(c - uv), length(d - uv));
-  float dap = get_area_triangle(length(d - uv), length(a - uv));
+  float area_ABP = triangle_area(a, b, uv);
+  float area_BCP = triangle_area(b, c, uv);
+  float area_CDP = triangle_area(c, d, uv);
+  float area_DAP = triangle_area(d, a, uv);
 
-  float sum_tri = get_sum_triangles(abp, bcp, cdp, dap);
+  float triangle_area_sum = area_ABP + area_BCP + area_CDP + area_DAP;
 
-  if (sum_tri < area_rectangle) {
+
+  float err = 0.01;
+  if (abs(triangle_area_sum - area_ABCD) < err) {
+    // Point is on the inside
     Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
   } else {
+    // Point is on the outside
     Target0 = color1;
   }
-
-  // vec2 a = vec2(0.3, 0.7);
-  // if (uv.x > a.x) {
-  //   Target0 = color1;
-  // } else {
-  //   Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
-  // }
-  //
-  // vec2 c = vec2(0.5, 0.5);
-  // float radius = 0.1;
-  // float dist = length(uv - c);
-  // if (dist > radius) {
-  //   Target0 = color1;
-  // } else {
-  //   Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
-  // }
 }
