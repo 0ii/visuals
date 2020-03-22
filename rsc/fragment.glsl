@@ -17,7 +17,7 @@ float triangle_area(vec2 a, vec2 b, vec2 c) {
   float i0 = length(a - c);
   float i1 = length(a - b) / 2;
   float base = sqrt( ( i0 * i0 ) - (i1 * i1) );
-  float height = length(a - b);
+  float height = length(b - a);
   return 0.5 * base * height;
 }
 
@@ -26,7 +26,7 @@ void main() {
   vec4 color1 = vec4(0.5, 0.2, 1.0, 1.0); // RGBA color
   vec4 color2 = color1.abgr;
 
-  float side_len = 0.5;
+  float side_len = 0.1;
   vec2 a = vec2(0.0, 0.0);
   vec2 b = vec2(side_len, 0.0);
   vec2 c = vec2(side_len, side_len);
@@ -44,7 +44,8 @@ void main() {
   float err = 0.05;
   if (abs(triangle_area_sum - area_ABCD) < err) {
     // Point is on the inside
-    Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
+    // Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
+    Target0 = color2;
   } else {
     // Point is on the outside
     Target0 = color1;
