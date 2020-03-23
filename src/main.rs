@@ -73,7 +73,7 @@ pub fn main() -> GameResult {
     };
 
     let cb = ggez::ContextBuilder::new("shader", "ggez")
-        .window_mode(ggez::conf::WindowMode::default().dimensions(1000.0, 1000.0))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(500.0, 500.0))
         .add_resource_path(resource_dir);
 
     let (ctx, event_loop) = &mut cb.build()?;

@@ -27,7 +27,7 @@ void main() {
   vec4 color2 = color1.abgr;
 
   vec2 v = mod(uv * time, 1.0);
-  if (!(left(v) && lower(v)) && quarter_circle(v)) {
+  if (!(left(v) && lower(v)) && quarter_circle(uv)) {
     // Point is on the inside
     Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
   } else {
