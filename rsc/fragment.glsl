@@ -21,12 +21,11 @@ void main() {
   vec4 color2 = color1.abgr;
 
   vec2 v = mod(uv * time, 1.0);
-  Target0 = vec4(v.xxx, 1.0);
-  // if (left(v) && lower(v)) {
-  //   // Point is on the inside
-  //   Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
-  // } else {
-  //   // Point is on the outside
-  //   Target0 = color1;
-  // }
+  if (left(v) && lower(v)) {
+    // Point is on the inside
+    Target0 = vec4(color2.bgr  * (cos(time) * 0.5 + 0.5), 0.5);
+  } else {
+    // Point is on the outside
+    Target0 = color1;
+  }
 }
