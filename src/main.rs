@@ -81,5 +81,6 @@ pub fn main() -> GameResult {
     let (ctx, event_loop) = &mut cb.build()?;
 
     let state = &mut MainState::new(ctx)?;
+
     event::run(ctx, event_loop, state)
 }

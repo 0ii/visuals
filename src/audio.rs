@@ -15,6 +15,38 @@ use ringbuf::RingBuffer;
 
 const LATENCY_MS: f32 = 150.0;
 
+// lets us produce audio samples in one thread and read them in another
+// one thread to write latest sample into call
+// in main thread read value out of the cell
+struct Audio {
+    sample: Arc<Cell<f32>>,
+}
+
+// Cell:
+//
+// pub fn set(&self, val: T)
+
+impl Audio {
+    // move everything from main here
+    fn spawn() -> Self {
+        let sample = Arc::new(Cell::new(0.0));
+
+        let audio = Audio { sample: sample.clone() };
+
+        // somewhere in here, we're going to do:
+        // sample.as_ref().set(new_sample);
+        todo!()
+    
+        audio
+    }
+
+    fn current_sample(&self) -> f32 {
+        self.sample
+            .as_ref() // get &Cell<f32>
+            .get() // get the actual f32
+    }
+}
+
 pub(crate) fn main() -> Result<(), anyhow::Error> {
     let host = cpal::default_host();
     let event_loop = host.event_loop();
@@ -79,6 +111,7 @@ pub(crate) fn main() -> Result<(), anyhow::Error> {
                 } => {
                     assert_eq!(id, input_stream_id);
                     let mut output_fell_behind = false;
+                    // set new_sample on Audio
                     for &sample in buffer.iter() {
                         if producer.push(sample).is_err() {
                             output_fell_behind = true;
