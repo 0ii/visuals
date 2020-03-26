@@ -1,4 +1,4 @@
-//! A very simple shader example.
+mod audio;
 
 use cgmath;
 use gfx::{self, *};
@@ -64,6 +64,8 @@ impl event::EventHandler for MainState {
 }
 
 pub fn main() -> GameResult {
+    audio::main();
+    return Ok(());
     let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("rsc");
