@@ -7,6 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ggez = "0.5.1"
+ggez = { path = "../../tmp/ggez" }
 cgmath = { version = "0.17", features = ["mint"]}
 gfx = "0.18"
+
+cpal = "0.11.0"
+anyhow = "1.0.12"
+hound = "3.4"
+ringbuf = "0.1.6"

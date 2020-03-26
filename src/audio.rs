@@ -1,129 +1,119 @@
-use ggez;
+//! Feeds back the input stream directly into the output stream.
+//!
+//! Assumes that the input and output devices can use the same stream format and that they support
+//! the f32 sample format.
+//!
+//! Uses a delay of `LATENCY_MS` milliseconds in case the default input and output streams are not
+//! precisely synchronised.
 
-use ggez::audio;
-use ggez::audio::SoundSource;
-use ggez::event;
-use ggez::graphics;
-use ggez::input;
-use ggez::nalgebra as na;
-use ggez::{Context, GameResult};
+extern crate anyhow;
+extern crate cpal;
+extern crate ringbuf;
 
-use std::env;
-use std::path;
-use std::time::Duration;
+use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
+use ringbuf::RingBuffer;
 
-struct MainState {
-    sound: audio::Source,
-}
+const LATENCY_MS: f32 = 150.0;
 
-impl MainState {
-    fn new(ctx: &mut Context) -> GameResult<MainState> {
-        let sound = audio::Source::new(ctx, "/sound.ogg")?;
-        let s = MainState { sound };
-        Ok(s)
+pub(crate) fn main() -> Result<(), anyhow::Error> {
+    let host = cpal::default_host();
+    let event_loop = host.event_loop();
+
+    // Default devices.
+    let input_device = host
+        .default_input_device()
+        .expect("failed to get default input device");
+    let output_device = host
+        .default_output_device()
+        .expect("failed to get default output device");
+    println!("Using default input device: \"{}\"", input_device.name()?);
+    println!("Using default output device: \"{}\"", output_device.name()?);
+
+    // We'll try and use the same format between streams to keep it simple
+    let mut format = input_device.default_input_format()?;
+    format.data_type = cpal::SampleFormat::F32;
+
+    // Build streams.
+    println!("Attempting to build both streams with `{:?}`.", format);
+    let input_stream_id = event_loop.build_input_stream(&input_device, &format)?;
+    let output_stream_id = event_loop.build_output_stream(&output_device, &format)?;
+    println!("Successfully built streams.");
+
+    // Create a delay in case the input and output devices aren't synced.
+    let latency_frames = (LATENCY_MS / 1_000.0) * format.sample_rate.0 as f32;
+    let latency_samples = latency_frames as usize * format.channels as usize;
+
+    // The buffer to share samples
+    let ring = RingBuffer::new(latency_samples * 2);
+    let (mut producer, mut consumer) = ring.split();
+
+    // Fill the samples with 0.0 equal to the length of the delay.
+    for _ in 0..latency_samples {
+        // The ring buffer has twice as much space as necessary to add latency here,
+        // so this should never fail
+        producer.push(0.0).unwrap();
     }
 
-    // To test: play, play_later, play_detached(),
-    // set_repeat, set_fade_in, set_pitch,
-    // basically every method on Source, actually,
-    // then the same ones for `SpatialSource`.
+    // Play the streams.
+    println!(
+        "Starting the input and output streams with `{}` milliseconds of latency.",
+        LATENCY_MS
+    );
+    event_loop.play_stream(input_stream_id.clone())?;
+    event_loop.play_stream(output_stream_id.clone())?;
 
-    /// Plays the sound multiple times
-    fn play_detached(&mut self, _ctx: &mut Context) {
-        // "detached" sounds keep playing even after they are dropped
-        let _ = self.sound.play_detached();
-    }
+    // Run the event loop on a separate thread.
+    std::thread::spawn(move || {
+        event_loop.run(move |id, result| {
+            let data = match result {
+                Ok(data) => data,
+                Err(err) => {
+                    eprintln!("an error occurred on stream {:?}: {}", id, err);
+                    return;
+                }
+            };
 
-    /// Waits until the sound is done playing before playing again.
-    fn play_later(&mut self, _ctx: &mut Context) {
-        let _ = self.sound.play_later();
-    }
+            match data {
+                cpal::StreamData::Input {
+                    buffer: cpal::UnknownTypeInputBuffer::F32(buffer),
+                } => {
+                    assert_eq!(id, input_stream_id);
+                    let mut output_fell_behind = false;
+                    for &sample in buffer.iter() {
+                        if producer.push(sample).is_err() {
+                            output_fell_behind = true;
+                        }
+                    }
+                    if output_fell_behind {
+                        eprintln!("output stream fell behind: try increasing latency");
+                    }
+                }
+                cpal::StreamData::Output {
+                    buffer: cpal::UnknownTypeOutputBuffer::F32(mut buffer),
+                } => {
+                    assert_eq!(id, output_stream_id);
+                    let mut input_fell_behind = None;
+                    for sample in buffer.iter_mut() {
+                        *sample = match consumer.pop() {
+                            Ok(s) => s,
+                            Err(err) => {
+                                input_fell_behind = Some(err);
+                                0.0
+                            }
+                        };
+                    }
+                    if let Some(_) = input_fell_behind {
+                        eprintln!("input stream fell behind: try increasing latency");
+                    }
+                }
+                _ => panic!("we're expecting f32 data"),
+            }
+        });
+    });
 
-    /// Fades the sound in over a second
-    /// Which isn't really ideal 'cause the sound is barely a second long, but still.
-    fn play_fadein(&mut self, ctx: &mut Context) {
-        let mut sound = audio::Source::new(ctx, "/sound.ogg").unwrap();
-        sound.set_fade_in(Duration::from_millis(1000));
-        sound.play_detached().unwrap();
-    }
-
-    fn play_highpitch(&mut self, ctx: &mut Context) {
-        let mut sound = audio::Source::new(ctx, "/sound.ogg").unwrap();
-        sound.set_pitch(2.0);
-        sound.play_detached().unwrap();
-    }
-    fn play_lowpitch(&mut self, ctx: &mut Context) {
-        let mut sound = audio::Source::new(ctx, "/sound.ogg").unwrap();
-        sound.set_pitch(0.5);
-        sound.play_detached().unwrap();
-    }
-
-    /// Plays the sound and prints out stats until it's done.
-    fn play_stats(&mut self, _ctx: &mut Context) {
-        let _ = self.sound.play();
-        while self.sound.playing() {
-            println!("Elapsed time: {:?}", self.sound.elapsed())
-        }
-    }
-}
-
-impl event::EventHandler for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        Ok(())
-    }
-
-    fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
-
-        graphics::queue_text(
-            ctx,
-            &graphics::Text::new("Press number keys 1-6 to play a sound, or escape to quit."),
-            na::Point2::origin(),
-            None,
-        );
-        graphics::draw_queued_text(
-            ctx,
-            (na::Point2::new(100.0, 100.0),),
-            None,
-            graphics::FilterMode::Linear,
-        )?;
-
-        graphics::present(ctx)?;
-        Ok(())
-    }
-
-    fn key_down_event(
-        &mut self,
-        ctx: &mut Context,
-        keycode: input::keyboard::KeyCode,
-        _keymod: input::keyboard::KeyMods,
-        _repeat: bool,
-    ) {
-        match keycode {
-            input::keyboard::KeyCode::Key1 => self.play_detached(ctx),
-            input::keyboard::KeyCode::Key2 => self.play_later(ctx),
-            input::keyboard::KeyCode::Key3 => self.play_fadein(ctx),
-            input::keyboard::KeyCode::Key4 => self.play_highpitch(ctx),
-            input::keyboard::KeyCode::Key5 => self.play_lowpitch(ctx),
-            input::keyboard::KeyCode::Key6 => self.play_stats(ctx),
-            input::keyboard::KeyCode::Escape => event::quit(ctx),
-            _ => (),
-        }
-    }
-}
-
-pub fn main() -> GameResult {
-    let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
-        let mut path = path::PathBuf::from(manifest_dir);
-        path.push("rsc");
-        path
-    } else {
-        path::PathBuf::from("./rsc")
-    };
-
-    let cb = ggez::ContextBuilder::new("imageview", "ggez").add_resource_path(resource_dir);
-    let (ctx, event_loop) = &mut cb.build()?;
-
-    let state = &mut MainState::new(ctx)?;
-    event::run(ctx, event_loop, state)
+    // Run for 3 seconds before closing.
+    println!("Playing for 3 seconds... ");
+    std::thread::sleep(std::time::Duration::from_secs(3));
+    println!("Done!");
+    Ok(())
 }

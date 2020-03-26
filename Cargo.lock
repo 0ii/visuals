@@ -48,6 +48,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "000444226fcff248f2bc4c7625be32c63caccfecc2723a2b9f78a7487a49c407"
 
 [[package]]
+name = "anyhow"
+version = "1.0.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "013a6e0a2cbe3d20f9c60b65458f7a7f7a5e636c5d0f45a5a6aee5d4b1f01785"
+
+[[package]]
 name = "approx"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -319,16 +325,7 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25b9e03f145fd4f2bf705e07b900cd41fc636598fe5dc452fd0db1441c3f496d"
 dependencies = [
- "core-foundation-sys 0.6.2",
- "libc",
-]
-
-[[package]]
-name = "core-foundation-sys"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "716c271e8613ace48344f723b60b900a93150271e5be206212d052bbc0883efa"
-dependencies = [
+ "core-foundation-sys",
  "libc",
 ]
 
@@ -371,16 +368,18 @@ dependencies = [
 
 [[package]]
 name = "cpal"
-version = "0.8.2"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d58ae1ed6536b1b233f5e3aeb6997a046ddb4d05e3f61701b58a92eb254a829e"
+checksum = "6b55d55d69f403f62a95bd3c04b431e0aedf5120c70f15d07a8edd234443dd59"
 dependencies = [
  "alsa-sys",
- "core-foundation-sys 0.5.1",
+ "core-foundation-sys",
  "coreaudio-rs",
  "lazy_static",
  "libc",
+ "num-traits 0.2.11",
  "stdweb 0.1.3",
+ "thiserror",
  "winapi",
 ]
 
@@ -626,8 +625,6 @@ dependencies = [
 [[package]]
 name = "ggez"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a76347431050a0b4e1a925124cdcde614b628260093bb52560d9c6b48435336"
 dependencies = [
  "approx",
  "bitflags",
@@ -885,7 +882,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f21dcc74995dd4cd090b147e79789f8d65959cbfb5f0b118002db869ea3bd0a0"
 dependencies = [
- "core-foundation-sys 0.6.2",
+ "core-foundation-sys",
  "mach 0.2.3",
 ]
 
@@ -924,13 +921,13 @@ checksum = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 
 [[package]]
 name = "lewton"
-version = "0.9.4"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d542c1a317036c45c2aa1cf10cc9d403ca91eb2d333ef1a4917e5cb10628bd0"
+checksum = "be42bea7971f4ba0ea1e215730c29bc1ff9bd2a9c10013912f42a8dcf8d77c0d"
 dependencies = [
  "byteorder",
  "ogg",
- "smallvec",
+ "tinyvec",
 ]
 
 [[package]]
@@ -1663,10 +1660,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "rodio"
-version = "0.9.0"
+name = "ringbuf"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d0f961b254e66d147a7b550c78b01308934c97d807a34b417fd0f5a0a0f3a2d"
+checksum = "d4c5bcca9bef534aff8343fd8026bf8ddbc375edf3f20abf7e559729bf8b1c41"
+dependencies = [
+ "rustc_version",
+]
+
+[[package]]
+name = "rodio"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73bbf260262fd5501b7a17d6827e0d25c1127e921eb177150a060faf6e217a70"
 dependencies = [
  "claxon",
  "cpal",
@@ -1674,7 +1680,6 @@ dependencies = [
  "lazy_static",
  "lewton",
  "minimp3",
- "nalgebra",
 ]
 
 [[package]]
@@ -2006,6 +2011,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "thiserror"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3711fd1c4e75b3eff12ba5c40dba762b6b65c5476e8174c1a664772060c49bf"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae2b85ba4c9aa32dd3343bd80eb8d22e9b54b7688c17ea3907f236885353b233"
+dependencies = [
+ "proc-macro2 1.0.9",
+ "quote 1.0.3",
+ "syn 1.0.17",
+]
+
+[[package]]
 name = "tiff"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2016,6 +2041,12 @@ dependencies = [
  "num-derive",
  "num-traits 0.2.11",
 ]
+
+[[package]]
+name = "tinyvec"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53953d2d3a5ad81d9f844a32f14ebb121f50b650cd59d0ee2a07cf13c617efed"
 
 [[package]]
 name = "toml"
@@ -2075,9 +2106,13 @@ checksum = "078775d0255232fb988e6fccf26ddc9d1ac274299aaedcedce21c6f72cc533ce"
 name = "visuals"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cgmath",
+ "cpal",
  "gfx",
  "ggez",
+ "hound",
+ "ringbuf",
 ]
 
 [[package]]
